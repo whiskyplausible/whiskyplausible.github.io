@@ -7,6 +7,9 @@
     src: url("./fonts/Gotham-Book.otf");
 }
 
+html, body {margin: 0; height: 100%; overflow: hidden}
+
+
 body {
     overflow: hidden;
     background-image: url('./images/axis_background_v2_small.jpg');
