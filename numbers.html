@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>French-English Number Pronunciation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+        }
+        #display {
+            font-size: 72px;
+            margin: 40px 0;
+        }
+        #language {
+            font-size: 24px;
+            color: #666;
+        }
+        #controls {
+            margin: 30px 0;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 18px;
+            margin: 0 10px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <h1>Number Pronunciation Practice</h1>
+    <p>This app will say a random number in French, pause for 3 seconds, then say it in English.</p>
+    
+    <div id="display">--</div>
+    <div id="language">--</div>
+    
+    <div id="controls">
+        <button id="startButton">Start</button>
+        <button id="pauseButton" disabled>Pause</button>
+    </div>
+    
+    <script>
+        // Check browser support for SpeechSynthesis
+        if ('speechSynthesis' in window) {
+            console.log('Speech synthesis supported');
+        } else {
+            alert('Sorry, your browser does not support speech synthesis!');
+        }
+        
+        const startButton = document.getElementById('startButton');
+        const pauseButton = document.getElementById('pauseButton');
+        const display = document.getElementById('display');
+        const languageDisplay = document.getElementById('language');
+        
+        let currentNumber = 0;
+        let isPaused = true;
+        let timer = null;
+        
+        // French number names
+        const frenchNumbers = {
+            0: 'zéro',
+            1: 'un',
+            2: 'deux',
+            3: 'trois',
+            4: 'quatre',
+            5: 'cinq',
+            6: 'six',
+            7: 'sept',
+            8: 'huit',
+            9: 'neuf',
+            10: 'dix',
+            11: 'onze',
+            12: 'douze',
+            13: 'treize',
+            14: 'quatorze',
+            15: 'quinze',
+            16: 'seize',
+            17: 'dix-sept',
+            18: 'dix-huit',
+            19: 'dix-neuf',
+            20: 'vingt',
+            30: 'trente',
+            40: 'quarante',
+            50: 'cinquante',
+            60: 'soixante',
+            70: 'soixante-dix',
+            80: 'quatre-vingts',
+            90: 'quatre-vingt-dix',
+            100: 'cent'
+        };
+        
+        // English number names (for reference)
+        const englishNumbers = {
+            0: 'zero',
+            1: 'one',
+            2: 'two',
+            3: 'three',
+            4: 'four',
+            5: 'five',
+            6: 'six',
+            7: 'seven',
+            8: 'eight',
+            9: 'nine',
+            10: 'ten',
+            11: 'eleven',
+            12: 'twelve',
+            13: 'thirteen',
+            14: 'fourteen',
+            15: 'fifteen',
+            16: 'sixteen',
+            17: 'seventeen',
+            18: 'eighteen',
+            19: 'nineteen',
+            20: 'twenty',
+            30: 'thirty',
+            40: 'forty',
+            50: 'fifty',
+            60: 'sixty',
+            70: 'seventy',
+            80: 'eighty',
+            90: 'ninety'
+        };
+        
+        // Function to get French pronunciation for a number
+        function getFrenchNumber(num) {
+            if (num <= 20) {
+                return frenchNumbers[num];
+            } else if (num < 30) {
+                return `vingt-${frenchNumbers[num - 20]}`;
+            } else if (num < 40) {
+                return num === 30 ? frenchNumbers[30] : `trente-${frenchNumbers[num - 30]}`;
+            } else if (num < 50) {
+                return num === 40 ? frenchNumbers[40] : `quarante-${frenchNumbers[num - 40]}`;
+            } else if (num < 60) {
+                return num === 50 ? frenchNumbers[50] : `cinquante-${frenchNumbers[num - 50]}`;
+            } else if (num < 70) {
+                return num === 60 ? frenchNumbers[60] : `soixante-${frenchNumbers[num - 60]}`;
+            } else if (num < 80) {
+                if (num === 70) return frenchNumbers[70];
+                if (num === 71) return 'soixante-et-onze';
+                return `soixante-${frenchNumbers[num - 60]}`;
+            } else if (num < 90) {
+                if (num === 80) return frenchNumbers[80];
+                return `quatre-vingt-${frenchNumbers[num - 80]}`;
+            } else if (num < 100) {
+                if (num === 90) return frenchNumbers[90];
+                return `quatre-vingt-${frenchNumbers[num - 90]}`;
+            } else if (num === 100) {
+                return frenchNumbers[100];
+            }
+        }
+        
+        // Function to get English pronunciation for a number
+        function getEnglishNumber(num) {
+            if (num <= 20) {
+                return englishNumbers[num];
+            } else if (num < 100) {
+                const tens = Math.floor(num / 10) * 10;
+                const ones = num % 10;
+                return ones === 0 ? englishNumbers[tens] : `${englishNumbers[tens]}-${englishNumbers[ones]}`;
+            } else {
+                return 'one hundred';
+            }
+        }
+        
+        // Function to speak a text
+        function speak(text, language) {
+            return new Promise(resolve => {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = language;
+                utterance.onend = resolve;
+                window.speechSynthesis.speak(utterance);
+            });
+        }
+        
+        // Function to generate a new random number
+        function generateRandomNumber() {
+            return Math.floor(Math.random() * 101); // 0-100
+        }
+        
+        // Function to run one cycle (French -> pause -> English)
+        async function runCycle() {
+            if (isPaused) return;
+            
+            // Generate a new random number
+            currentNumber = generateRandomNumber();
+            display.textContent = currentNumber;
+            
+            // Say the number in French
+            const frenchText = getFrenchNumber(currentNumber);
+            languageDisplay.textContent = "French";
+            await speak(frenchText, 'fr-FR');
+            
+            // Wait 3 seconds
+            await new Promise(resolve => {
+                timer = setTimeout(() => {
+                    languageDisplay.textContent = "...";
+                    resolve();
+                }, 3000);
+            });
+            
+            if (isPaused) return;
+            
+            // Say the number in English
+            const englishText = getEnglishNumber(currentNumber);
+            languageDisplay.textContent = "English";
+            await speak(englishText, 'en-US');
+            
+            // No pause between English and next number - proceed immediately
+            
+            if (!isPaused) {
+                runCycle();
+            }
+        }
+        
+        // Start button click handler
+        startButton.addEventListener('click', () => {
+            isPaused = false;
+            startButton.disabled = true;
+            pauseButton.disabled = false;
+            runCycle();
+        });
+        
+        // Pause button click handler
+        pauseButton.addEventListener('click', () => {
+            isPaused = true;
+            startButton.disabled = false;
+            pauseButton.disabled = true;
+            if (timer) {
+                clearTimeout(timer);
+            }
+            window.speechSynthesis.cancel();
+            languageDisplay.textContent = "Paused";
+        });
+    </script>
+</body>
+</html>
