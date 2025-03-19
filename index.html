@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>French Practice!</title>
+    <style>
+        /* Reset and base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 25px;
+            color: #2c3e50;
+        }
+        
+        /* Nav container */
+        .nav-container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        /* Button list */
+        .button-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            list-style: none;
+        }
+        
+        /* Navigation buttons */
+        .nav-button {
+            display: block;
+            width: 100%;
+            padding: 15px 20px;
+            background-color: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border: none;
+            cursor: pointer;
+        }
+        
+        .nav-button:hover, .nav-button:focus {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        .nav-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Button icons - optional */
+        .button-icon {
+            margin-right: 10px;
+        }
+        
+        /* Additional button variations */
+        .home {
+            background-color: #3498db;
+        }
+        
+        .about {
+            background-color: #2ecc71;
+        }
+        
+        .services {
+            background-color: #e74c3c;
+        }
+        
+        .contact {
+            background-color: #f39c12;
+        }
+        
+        .gallery {
+            background-color: #9b59b6;
+        }
+        
+        /* Media queries for responsiveness */
+        @media (max-width: 768px) {
+            .nav-button {
+                padding: 16px 20px;
+                font-size: 1.2rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            body {
+                padding: 15px;
+            }
+            
+            .nav-button {
+                padding: 14px 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="nav-container">
+        <h1>Navigation Menu</h1>
+        
+        <ul class="button-list">
+            <li>
+                <a href="numbers.html" class="nav-button home">
+                    <span class="button-icon">🏠</span>Numbers
+                </a>
+            </li>
+            <!-- <li>
+                <a href="about.html" class="nav-button about">
+                    <span class="button-icon">ℹ️</span>About Us
+                </a>
+            </li>
+            <li>
+                <a href="services.html" class="nav-button services">
+                    <span class="button-icon">🛠️</span>Our Services
+                </a>
+            </li>
+            <li>
+                <a href="gallery.html" class="nav-button gallery">
+                    <span class="button-icon">🖼️</span>Gallery
+                </a>
+            </li>
+            <li>
+                <a href="contact.html" class="nav-button contact">
+                    <span class="button-icon">📞</span>Contact Us
+                </a>
+            </li> -->
+        </ul>
+    </div>
+</body>
+</html>
