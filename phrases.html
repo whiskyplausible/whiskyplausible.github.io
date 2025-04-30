@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>French-English Phrase Pronunciation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+        }
+        #display {
+            font-size: 36px;
+            margin: 30px 0;
+            min-height: 80px;
+        }
+        #language {
+            font-size: 24px;
+            color: #666;
+            margin-bottom: 20px;
+        }
+        #controls {
+            margin: 20px 0;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 18px;
+            margin: 10px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        #jsonInput {
+            width: 100%;
+            height: 200px;
+            margin: 20px 0;
+            padding: 10px;
+            font-family: monospace;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .input-section {
+            margin: 30px 0;
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+        #phraseCount {
+            margin-top: 10px;
+            font-style: italic;
+            color: #666;
+        }
+        .mode-selector {
+            margin: 20px 0;
+        }
+        .sample-json {
+            text-align: left;
+            background-color: #eee;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 14px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Phrase Pronunciation Practice</h1>
+    <p>This app will say phrases in French, pause for 2 seconds, then say the translation in English.</p>
+    
+    <div class="input-section">
+        <h2>Input Your Phrases</h2>
+        <p>Paste your JSON of French-English phrases below:</p>
+        <div class="sample-json">
+            Example format:<br>
+            [<br>
+            &nbsp;&nbsp;{"french": "Bonjour", "english": "Hello"},<br>
+            &nbsp;&nbsp;{"french": "Comment allez-vous?", "english": "How are you?"}<br>
+            ]
+        </div>
+        <textarea id="jsonInput" placeholder="Paste your JSON here..."></textarea>
+        <div id="jsonError" class="error"></div>
+        <button id="loadButton">Load Phrases</button>
+        <div id="phraseCount"></div>
+    </div>
+    
+    <div class="mode-selector">
+        <label>
+            <input type="radio" name="mode" value="phrases" checked> Use Custom Phrases
+        </label>
+        <label>
+            <input type="radio" name="mode" value="numbers"> Use Numbers (0-100)
+        </label>
+    </div>
+    
+    <div id="display">--</div>
+    <div id="language">--</div>
+    
+    <div id="controls">
+        <button id="startButton" disabled>Start</button>
+        <button id="pauseButton" disabled>Pause</button>
+        <button id="nextButton" disabled>Next Phrase</button>
+    </div>
+    
+    <script>
+        // Check browser support for SpeechSynthesis
+        if ('speechSynthesis' in window) {
+            console.log('Speech synthesis supported');
+        } else {
+            alert('Sorry, your browser does not support speech synthesis!');
+        }
+        
+        const startButton = document.getElementById('startButton');
+        const pauseButton = document.getElementById('pauseButton');
+        const nextButton = document.getElementById('nextButton');
+        const display = document.getElementById('display');
+        const languageDisplay = document.getElementById('language');
+        const jsonInput = document.getElementById('jsonInput');
+        const loadButton = document.getElementById('loadButton');
+        const jsonError = document.getElementById('jsonError');
+        const phraseCount = document.getElementById('phraseCount');
+        const modeRadios = document.querySelectorAll('input[name="mode"]');
+        
+        let currentIndex = 0;
+        let isPaused = true;
+        let timer = null;
+        let phrases = [];
+        let mode = "phrases";
+        
+        // French number names
+        const frenchNumbers = {
+            0: 'zéro',
+            1: 'un',
+            2: 'deux',
+            3: 'trois',
+            4: 'quatre',
+            5: 'cinq',
+            6: 'six',
+            7: 'sept',
+            8: 'huit',
+            9: 'neuf',
+            10: 'dix',
+            11: 'onze',
+            12: 'douze',
+            13: 'treize',
+            14: 'quatorze',
+            15: 'quinze',
+            16: 'seize',
+            17: 'dix-sept',
+            18: 'dix-huit',
+            19: 'dix-neuf',
+            20: 'vingt',
+            30: 'trente',
+            40: 'quarante',
+            50: 'cinquante',
+            60: 'soixante',
+            70: 'soixante-dix',
+            80: 'quatre-vingts',
+            90: 'quatre-vingt-dix',
+            100: 'cent'
+        };
+        
+        // English number names (for reference)
+        const englishNumbers = {
+            0: 'zero',
+            1: 'one',
+            2: 'two',
+            3: 'three',
+            4: 'four',
+            5: 'five',
+            6: 'six',
+            7: 'seven',
+            8: 'eight',
+            9: 'nine',
+            10: 'ten',
+            11: 'eleven',
+            12: 'twelve',
+            13: 'thirteen',
+            14: 'fourteen',
+            15: 'fifteen',
+            16: 'sixteen',
+            17: 'seventeen',
+            18: 'eighteen',
+            19: 'nineteen',
+            20: 'twenty',
+            30: 'thirty',
+            40: 'forty',
+            50: 'fifty',
+            60: 'sixty',
+            70: 'seventy',
+            80: 'eighty',
+            90: 'ninety'
+        };
+        
+        // Function to get French pronunciation for a number
+        function getFrenchNumber(num) {
+            if (num <= 20) {
+                return frenchNumbers[num];
+            } else if (num < 30) {
+                return `vingt-${frenchNumbers[num - 20]}`;
+            } else if (num < 40) {
+                return num === 30 ? frenchNumbers[30] : `trente-${frenchNumbers[num - 30]}`;
+            } else if (num < 50) {
+                return num === 40 ? frenchNumbers[40] : `quarante-${frenchNumbers[num - 40]}`;
+            } else if (num < 60) {
+                return num === 50 ? frenchNumbers[50] : `cinquante-${frenchNumbers[num - 50]}`;
+            } else if (num < 70) {
+                return num === 60 ? frenchNumbers[60] : `soixante-${frenchNumbers[num - 60]}`;
+            } else if (num < 80) {
+                if (num === 70) return frenchNumbers[70];
+                if (num === 71) return 'soixante-et-onze';
+                return `soixante-${frenchNumbers[num - 60]}`;
+            } else if (num < 90) {
+                if (num === 80) return frenchNumbers[80];
+                return `quatre-vingt-${frenchNumbers[num - 80]}`;
+            } else if (num < 100) {
+                if (num === 90) return frenchNumbers[90];
+                return `quatre-vingt-${frenchNumbers[num - 80]}`;
+            } else if (num === 100) {
+                return frenchNumbers[100];
+            }
+        }
+        
+        // Function to get English pronunciation for a number
+        function getEnglishNumber(num) {
+            if (num <= 20) {
+                return englishNumbers[num];
+            } else if (num < 100) {
+                const tens = Math.floor(num / 10) * 10;
+                const ones = num % 10;
+                return ones === 0 ? englishNumbers[tens] : `${englishNumbers[tens]}-${englishNumbers[ones]}`;
+            } else {
+                return 'one hundred';
+            }
+        }
+        
+        // Function to generate random number phrases
+        function generateNumberPhrases(count) {
+            const numberPhrases = [];
+            for (let i = 0; i < count; i++) {
+                const num = Math.floor(Math.random() * 101); // 0-100
+                numberPhrases.push({
+                    french: getFrenchNumber(num),
+                    english: getEnglishNumber(num),
+                    display: num.toString()
+                });
+            }
+            return numberPhrases;
+        }
+        
+        // Function to speak a text
+        function speak(text, language) {
+            return new Promise(resolve => {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = language;
+                utterance.onend = resolve;
+                window.speechSynthesis.speak(utterance);
+            });
+        }
+        
+        // Function to validate and parse JSON input
+        function loadPhrases() {
+            jsonError.textContent = "";
+            
+            try {
+                const input = jsonInput.value.trim();
+                if (!input) {
+                    throw new Error("Please enter JSON data");
+                }
+                
+                const parsedPhrases = JSON.parse(input);
+                
+                if (!Array.isArray(parsedPhrases)) {
+                    throw new Error("JSON must be an array of objects");
+                }
+                
+                if (parsedPhrases.length === 0) {
+                    throw new Error("Array is empty. Please add at least one phrase");
+                }
+                
+                // Validate each phrase has french and english properties
+                for (let i = 0; i < parsedPhrases.length; i++) {
+                    const phrase = parsedPhrases[i];
+                    if (!phrase.french || !phrase.english) {
+                        throw new Error(`Phrase at index ${i} is missing required 'french' or 'english' property`);
+                    }
+                }
+                
+                phrases = parsedPhrases.map(p => ({
+                    french: p.french,
+                    english: p.english,
+                    display: p.french
+                }));
+                
+                phraseCount.textContent = `${phrases.length} phrases loaded`;
+                startButton.disabled = false;
+                
+                mode = "phrases";
+                document.querySelector('input[value="phrases"]').checked = true;
+                
+                return true;
+            } catch (error) {
+                jsonError.textContent = `Error: ${error.message}`;
+                startButton.disabled = true;
+                return false;
+            }
+        }
+        
+        // Load number phrases
+        function loadNumberPhrases() {
+            phrases = generateNumberPhrases(30); // Generate 30 random numbers
+            phraseCount.textContent = `${phrases.length} number phrases loaded`;
+            startButton.disabled = false;
+            mode = "numbers";
+        }
+        
+        // Function to shuffle the phrases array
+        function shufflePhrases() {
+            for (let i = phrases.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [phrases[i], phrases[j]] = [phrases[j], phrases[i]];
+            }
+        }
+        
+        // Function to run one cycle (French -> pause -> English)
+        async function runCycle() {
+            if (isPaused || phrases.length === 0) return;
+            
+            const currentPhrase = phrases[currentIndex];
+            display.textContent = currentPhrase.display;
+            
+            // Say the phrase in French
+            languageDisplay.textContent = "French";
+            await speak(currentPhrase.french, 'fr-FR');
+            
+            // Wait 2 seconds
+            await new Promise(resolve => {
+                timer = setTimeout(() => {
+                    languageDisplay.textContent = "...";
+                    resolve();
+                }, 2000);
+            });
+            
+            if (isPaused) return;
+            
+            // Say the phrase in English
+            languageDisplay.textContent = "English";
+            await speak(currentPhrase.english, 'en-US');
+            
+            if (isPaused) return;
+            
+            // Move to next phrase
+            currentIndex = (currentIndex + 1) % phrases.length;
+            
+            // Auto-continue after a short pause
+            timer = setTimeout(() => {
+                if (!isPaused) {
+                    runCycle();
+                }
+            }, 1000);
+        }
+        
+        // Start button click handler
+        startButton.addEventListener('click', () => {
+            isPaused = false;
+            startButton.disabled = true;
+            pauseButton.disabled = false;
+            nextButton.disabled = false;
+            
+            if (mode === "numbers" && phrases.length === 0) {
+                loadNumberPhrases();
+            }
+            
+            shufflePhrases();
+            currentIndex = 0;
+            runCycle();
+        });
+        
+        // Pause button click handler
+        pauseButton.addEventListener('click', () => {
+            isPaused = true;
+            startButton.disabled = false;
+            pauseButton.disabled = true;
+            if (timer) {
+                clearTimeout(timer);
+            }
+            window.speechSynthesis.cancel();
+            languageDisplay.textContent = "Paused";
+        });
+        
+        // Next button click handler
+        nextButton.addEventListener('click', () => {
+            if (timer) {
+                clearTimeout(timer);
+            }
+            window.speechSynthesis.cancel();
+            currentIndex = (currentIndex + 1) % phrases.length;
+            runCycle();
+        });
+        
+        // Load button click handler
+        loadButton.addEventListener('click', loadPhrases);
+        
+        // Mode change handler
+        modeRadios.forEach(radio => {
+            radio.addEventListener('change', event => {
+                mode = event.target.value;
+                if (mode === "numbers") {
+                    loadNumberPhrases();
+                } else if (phrases.length === 0) {
+                    startButton.disabled = true;
+                    phraseCount.textContent = "Please load phrases";
+                }
+            });
+        });
+        
+        // Add a sample JSON for testing
+        jsonInput.value = `[
+  { "french": "Bienvenue !", "english": "Welcome!" },
+  { "french": "Où aimeriez-vous vous asseoir ?", "english": "Where would you like to sit?" },
+  { "french": "Table pour combien de personnes ?", "english": "Table for how many people?" },
+  { "french": "Voulez-vous un menu ?", "english": "Would you like a menu?" },
+  { "french": "Avez-vous choisi ?", "english": "Have you decided?" },
+  { "french": "Que souhaitez-vous commander ?", "english": "What would you like to order?" },
+  { "french": "Voulez-vous prendre quelque chose à emporter ?", "english": "Do you want takeaway?" },
+  { "french": "Est-ce que vous souhaitez un café ?", "english": "Would you like a coffee?" },
+  { "french": "Voulez-vous de la crème ou du sucre ?", "english": "Do you want cream or sugar?" },
+  { "french": "Voulez-vous du lait ?", "english": "Would you like milk?" },
+  { "french": "Comment voulez-vous votre café ?", "english": "How would you like your coffee?" },
+  { "french": "Voulez-vous une pâtisserie ?", "english": "Would you like a pastry?" },
+  { "french": "Cela vous convient-il ?", "english": "Does that work for you?" },
+  { "french": "Votre commande sera prête dans quelques minutes.", "english": "Your order will be ready in a few minutes." },
+  { "french": "Désirez-vous autre chose ?", "english": "Would you like anything else?" },
+  { "french": "Cela fait tout pour vous ?", "english": "Is that everything for you?" },
+  { "french": "C'est à emporter ou sur place ?", "english": "Is it for takeaway or to stay?" },
+  { "french": "Voulez-vous l'addition ?", "english": "Do you want the bill?" },
+  { "french": "Souhaitez-vous payer en espèces ou par carte ?", "english": "Would you like to pay in cash or by card?" },
+  { "french": "Pouvez-vous me donner vos coordonnées pour la facture ?", "english": "Can you give me your details for the bill?" },
+  { "french": "L'addition, s'il vous plaît.", "english": "The bill, please." },
+  { "french": "Est-ce que vous avez une carte de fidélité ?", "english": "Do you have a loyalty card?" },
+  { "french": "Nous acceptons les cartes de crédit.", "english": "We accept credit cards." },
+  { "french": "Puis-je vous aider avec quelque chose d'autre ?", "english": "Can I help you with anything else?" },
+  { "french": "Voulez-vous votre commande pour emporter ?", "english": "Would you like your order to go?" },
+  { "french": "Voulez-vous un petit déjeuner ?", "english": "Would you like breakfast?" },
+  { "french": "Avez-vous une réservation ?", "english": "Do you have a reservation?" },
+  { "french": "Merci pour votre patience.", "english": "Thank you for your patience." },
+  { "french": "Tout est prêt, voici votre commande.", "english": "Everything is ready, here is your order." },
+  { "french": "Avez-vous besoin de plus de temps ?", "english": "Do you need more time?" },
+  { "french": "Nous servons des boissons chaudes et froides.", "english": "We serve both hot and cold drinks." },
+  { "french": "Nous avons des options végétariennes.", "english": "We have vegetarian options." },
+  { "french": "Est-ce que vous avez des allergies ?", "english": "Do you have any allergies?" },
+  { "french": "Voulez-vous un verre d'eau ?", "english": "Would you like a glass of water?" },
+  { "french": "Nous avons des pâtisseries fraîches.", "english": "We have fresh pastries." },
+  { "french": "C'est tout pour aujourd'hui ?", "english": "Is that all for today?" },
+  { "french": "Je vais vous préparer cela tout de suite.", "english": "I will prepare that for you right away." },
+  { "french": "Est-ce que vous êtes prêts à commander ?", "english": "Are you ready to order?" },
+  { "french": "Nous avons une spécialité du jour.", "english": "We have a special of the day." },
+  { "french": "Voulez-vous un dessert ?", "english": "Would you like a dessert?" },
+  { "french": "Comment trouvez-vous notre café ?", "english": "How do you find our coffee?" },
+  { "french": "Voulez-vous un supplément ?", "english": "Would you like an extra?" },
+  { "french": "Votre table est prête.", "english": "Your table is ready." },
+  { "french": "Où souhaitez-vous vous installer ?", "english": "Where would you like to sit?" },
+  { "french": "Cela vous convient-il comme place ?", "english": "Does this seat work for you?" },
+  { "french": "Nous avons des boissons sans alcool.", "english": "We have non-alcoholic drinks." },
+  { "french": "Souhaitez-vous un cappuccino ?", "english": "Would you like a cappuccino?" },
+  { "french": "Puis-je vous offrir un café ?", "english": "Can I offer you a coffee?" },
+  { "french": "Voulez-vous une tasse de thé ?", "english": "Would you like a cup of tea?" },
+  { "french": "C'est un plaisir de vous servir.", "english": "It’s a pleasure to serve you." },
+  { "french": "Avez-vous besoin de quelque chose d'autre ?", "english": "Do you need anything else?" },
+  { "french": "Le service est inclus.", "english": "Service is included." },
+  { "french": "Puis-je vous recommander quelque chose ?", "english": "Can I recommend something?" },
+  { "french": "Le café est très populaire ici.", "english": "The coffee is very popular here." },
+  { "french": "Que souhaitez-vous boire ?", "english": "What would you like to drink?" },
+  { "french": "Est-ce que vous voulez du sucre ?", "english": "Would you like sugar?" },
+  { "french": "Voulez-vous un verre de vin ?", "english": "Would you like a glass of wine?" },
+  { "french": "Avez-vous un choix de lait végétal ?", "english": "Do you have a choice of plant-based milk?" },
+  { "french": "Voulez-vous du pain avec votre café ?", "english": "Would you like some bread with your coffee?" },
+  { "french": "Que puis-je vous apporter d'autre ?", "english": "What else can I bring you?" },
+  { "french": "Pouvez-vous patienter quelques instants ?", "english": "Can you wait a moment?" },
+  { "french": "Votre commande sera prête sous peu.", "english": "Your order will be ready shortly." },
+  { "french": "Puis-je prendre votre commande ?", "english": "Can I take your order?" },
+  { "french": "Est-ce pour emporter ?", "english": "Is it for takeaway?" },
+  { "french": "Souhaitez-vous un sandwich ?", "english": "Would you like a sandwich?" },
+  { "french": "Nous avons des options sans gluten.", "english": "We have gluten-free options." },
+  { "french": "Cela vous semble-t-il correct ?", "english": "Does that seem correct to you?" },
+  { "french": "Voulez-vous un peu de lait dans votre thé ?", "english": "Would you like some milk in your tea?" },
+  { "french": "Pouvez-vous me donner votre numéro de table ?", "english": "Can you give me your table number?" },
+  { "french": "Voulez-vous un café au lait ?", "english": "Would you like a latte?" },
+  { "french": "Cela vous convient-il ?", "english": "Is that okay for you?" },
+  { "french": "Avez-vous besoin d'un moment de plus ?", "english": "Do you need a little more time?" },
+  { "french": "Comment avez-vous trouvé votre repas ?", "english": "How did you find your meal?" },
+  { "french": "Merci de votre visite.", "english": "Thank you for visiting." },
+  { "french": "Nous espérons vous revoir bientôt.", "english": "We hope to see you again soon." },
+  { "french": "Voulez-vous un thé glacé ?", "english": "Would you like an iced tea?" },
+  { "french": "Avez-vous des préférences alimentaires ?", "english": "Do you have any dietary preferences?" },
+  { "french": "Votre table est prête, suivez-moi.", "english": "Your table is ready, follow me." },
+  { "french": "Je vous apporterai votre commande dans un instant.", "english": "I will bring your order in a moment." },
+  { "french": "Est-ce que vous êtes satisfait de votre service ?", "english": "Are you satisfied with your service?" },
+  { "french": "Nous avons des smoothies frais.", "english": "We have fresh smoothies." },
+  { "french": "Voulez-vous du sucre dans votre thé ?", "english": "Would you like sugar in your tea?" },
+  { "french": "Voulez-vous un gâteau avec votre café ?", "english": "Would you like a cake with your coffee?" },
+  { "french": "C'est un plaisir de vous servir aujourd'hui.", "english": "It’s a pleasure serving you today." },
+  { "french": "L'addition est-elle correcte ?", "english": "Is the bill correct?" },
+  { "french": "Merci de patienter, votre commande arrive.", "english": "Thank you for waiting, your order is coming." },
+  { "french": "Souhaitez-vous que je vous apporte quelque chose d'autre ?", "english": "Would you like me to bring you something else?" },
+  { "french": "C'est votre premier café ici ?", "english": "Is this your first coffee here?" },
+  { "french": "Merci, passez une excellente journée.", "english": "Thank you, have a great day." },
+  { "french": "Le paiement n'a pas été accepté.", "english": "The payment was not accepted." },
+  { "french": "Le paiement n'a pas fonctionné.", "english": "The payment didn't go through." },
+  { "french": "Votre paiement a échoué.", "english": "Your payment has failed." },
+  { "french": "Il y a un problème avec votre paiement.", "english": "There's an issue with your payment." },
+  { "french": "Le paiement a été refusé.", "english": "The payment was declined." },
+  { "french": "Le paiement n'a pas pu être traité.", "english": "The payment could not be processed." },
+  { "french": "Voulez-vous payer avec une autre méthode ?", "english": "Would you like to pay with another method?" },
+  { "french": "Souhaitez-vous utiliser une autre carte ?", "english": "Would you like to use another card?" },
+  { "french": "Le paiement n'a pas passé, pouvez-vous réessayer ?", "english": "The payment didn't go through, could you try again?" },
+  { "french": "Le système n'a pas accepté le paiement.", "english": "The system did not accept the payment." },
+  { "french": "Est-ce que vous souhaitez payer par un autre moyen ?", "english": "Would you like to pay by another method?" },
+  
+  { "french": "Voulez-vous un sac ?", "english": "Do you want a bag?" },
+  { "french": "Souhaitez-vous un sac pour cela ?", "english": "Would you like a bag for that?" },
+  { "french": "Avez-vous besoin d'un sac ?", "english": "Do you need a bag?" },
+  { "french": "Souhaitez-vous qu'on vous emballe cela ?", "english": "Would you like us to wrap that up for you?" },
+  { "french": "Voulez-vous qu'on mette cela dans un sac ?", "english": "Do you want us to put that in a bag?" },
+  { "french": "Est-ce que vous voulez un sac pour vos achats ?", "english": "Do you want a bag for your purchases?" },
+  { "french": "Souhaitez-vous un sac en plastique ?", "english": "Would you like a plastic bag?" },
+  { "french": "Avez-vous besoin d'un sac en papier ?", "english": "Do you need a paper bag?" },
+  { "french": "Puis-je vous mettre cela dans un sac ?", "english": "Shall I put that in a bag for you?" },
+  { "french": "Voulez-vous un sac supplémentaire ?", "english": "Do you want an extra bag?" }
+]
+`;
+    </script>
+</body>
+</html>
