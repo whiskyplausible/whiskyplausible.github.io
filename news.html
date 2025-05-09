@@ -1,0 +1,409 @@
+import React, { useState, useEffect } from 'react';
+
+const FrenchEnglishReader = () => {
+  const [script, setScript] = useState([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  // Function to speak text in the appropriate language
+  const speak = (text, lang) => {
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = lang;
+    window.speechSynthesis.speak(utterance);
+    
+    // Return a promise that resolves when speech is done
+    return new Promise(resolve => {
+      utterance.onend = resolve;
+    });
+  };
+
+  // Play sequence: French sentence followed by English translation
+  const playSequence = async () => {
+    if (currentIndex >= script.length) {
+      setIsPlaying(false);
+      return;
+    }
+    
+    setIsPlaying(true);
+    
+    // Speak French
+    await speak(script[currentIndex].french, 'fr-FR');
+    
+    // Slight pause before English
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // Speak English
+    await speak(script[currentIndex].english, 'en-GB');
+    
+    // Advance to next sentence pair after a short pause
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    setCurrentIndex(prevIndex => prevIndex + 1);
+  };
+
+  // Effect to continue playing if isPlaying is true
+  useEffect(() => {
+    if (isPlaying) {
+      playSequence();
+    }
+  }, [currentIndex, isPlaying]);
+
+  // Load script data
+  useEffect(() => {
+    const loadScript = async () => {
+      setLoading(true);
+      
+      // The translated script data
+      const translatedScript = [
+        {
+          french: "Bonjour et bienvenue sur RFI. 16 heures temps universel, 18 heures ici, à Paris.",
+          english: "Hello and welcome to RFI. 16 hours universal time, 18 hours here in Paris."
+        },
+        {
+          french: "Le Journal en français facile.",
+          english: "The News in easy French."
+        },
+        {
+          french: "Mathis Slimano.",
+          english: "Mathis Slimano."
+        },
+        {
+          french: "L'actualité de ce vendredi 9 mai :",
+          english: "The news for this Friday, May 9th:"
+        },
+        {
+          french: "C'est le traditionnel défilé militaire à Moscou, à l'occasion de la victoire sur l'Allemagne nazie. Une vingtaine de dirigeants du monde présents, pendant que les Européens, eux, sont en Ukraine. Ils promettent de débloquer 1 milliard d'euros pour soutenir le pays. Un sommet est prévu demain à Kiev.",
+          english: "It's the traditional military parade in Moscow, on the occasion of the victory over Nazi Germany. About twenty world leaders are present, while the Europeans are in Ukraine. They promise to release 1 billion euros to support the country. A summit is scheduled for tomorrow in Kyiv."
+        },
+        {
+          french: "La première messe de Léon XIV. Le nouveau pape a déploré un recul de la foi. La messe d'inauguration de son pontificat aura lieu dans une dizaine de jours.",
+          english: "The first mass of Leo XIV. The new pope lamented a decline in faith. The inauguration mass of his pontificate will take place in about ten days."
+        },
+        {
+          french: "Et puis 2 millions de personnes face au risque de mourir de faim : c'est la situation dans la bande de Gaza. Cela fait plus de deux mois qu'aucune aide humanitaire ne rentre dans le territoire palestinien.",
+          english: "And then 2 million people facing the risk of starvation: this is the situation in the Gaza Strip. It has been more than two months since no humanitarian aid has entered the Palestinian territory."
+        },
+        {
+          french: "C'est une démonstration de force. En ce 9 mai, la Russie a célébré en grande pompe la victoire en 1945 sur l'Allemagne nazie, avec la traditionnelle parade militaire à Moscou, sur la place Rouge.",
+          english: "It's a show of force. On this May 9th, Russia celebrated with great fanfare the victory in 1945 over Nazi Germany, with the traditional military parade in Moscow's Red Square."
+        },
+        {
+          french: "Une vingtaine de dirigeants du monde y ont assisté, dont le président chinois, Xi Jinping.",
+          english: "About twenty world leaders attended, including Chinese President Xi Jinping."
+        },
+        {
+          french: "Et, pendant que Vladimir Poutine célébrait, je cite, « le courage des soldats russes » engagés en Ukraine, les Européens, eux, sont à Lviv, dans l'ouest de l'Ukraine : les ministres des Affaires étrangères ainsi que la cheffe de la diplomatie européenne.",
+          english: "And, while Vladimir Putin was celebrating, I quote, \"the courage of Russian soldiers\" engaged in Ukraine, the Europeans are in Lviv, in western Ukraine: the foreign ministers as well as the head of European diplomacy."
+        },
+        {
+          french: "À cette occasion, Kaja Kallas a annoncé le déblocage de 1 milliard d'euros pour soutenir l'effort de guerre des Ukrainiens.",
+          english: "On this occasion, Kaja Kallas announced the release of 1 billion euros to support the Ukrainian war effort."
+        },
+        {
+          french: "Une aide financée sur les intérêts des avoirs russes gelés, c'est-à-dire grâce à l'argent que génèrent les investissements russes dans l'Union européenne.",
+          english: "Aid financed from the interest on frozen Russian assets, that is, thanks to the money generated by Russian investments in the European Union."
+        },
+        {
+          french: "Kaja Kallas en a aussi profité pour critiquer les dirigeants présents à Moscou pour assister au défilé militaire.",
+          english: "Kaja Kallas also took the opportunity to criticize the leaders present in Moscow to attend the military parade."
+        },
+        {
+          french: "« Notre présence ici marque l'unité de notre soutien indéfectible à l'Ukraine. Aujourd'hui, celui qui est pour la paix doit être ici en Ukraine et non pas à Moscou. La Russie a déclenché contre l'Ukraine la guerre la plus dévastatrice depuis 1945. Il y a 80 ans, Hitler bombardait l'Ukraine. Aujourd'hui, c'est Poutine qui fait la même chose. Pour venir en aide à l'Ukraine, nous venons de débloquer 1 milliard d'euros, qui ira à son industrie de défense. Ce financement ira soutenir directement les entreprises ukrainiennes de défense et permettra de garantir une aide militaire additionnelle dans les prochains mois, ce qui sera crucial. »",
+          english: "\"Our presence here marks the unity of our unwavering support for Ukraine. Today, those who are for peace must be here in Ukraine and not in Moscow. Russia has launched against Ukraine the most devastating war since 1945. 80 years ago, Hitler was bombing Ukraine. Today, it is Putin who is doing the same thing. To help Ukraine, we have just released 1 billion euros, which will go to its defense industry. This funding will directly support Ukrainian defense companies and ensure additional military aid in the coming months, which will be crucial.\""
+        },
+        {
+          french: "La cheffe de la diplomatie européenne, Kaja Kallas.",
+          english: "The head of European diplomacy, Kaja Kallas."
+        },
+        {
+          french: "Demain, ce sont les dirigeants de la « coalition des volontaires », ces pays alliés de l'Ukraine, qui sont attendus sur place pour un sommet.",
+          english: "Tomorrow, the leaders of the \"coalition of the willing,\" these countries allied with Ukraine, are expected on site for a summit."
+        },
+        {
+          french: "Annonce de Volodymyr Zelensky. Le président ukrainien veut continuer à mobiliser ses alliés afin d'apporter des garanties de sécurité à son pays.",
+          english: "Announcement from Volodymyr Zelensky. The Ukrainian president wants to continue mobilizing his allies to provide security guarantees to his country."
+        },
+        {
+          french: "Et, à l'instant, le ministre des Affaires étrangères français dit être en route pour Kiev, pour participer à ce sommet.",
+          english: "And, at the moment, the French Minister of Foreign Affairs says he is on his way to Kyiv to participate in this summit."
+        },
+        {
+          french: "La France, justement, qui compte parmi les alliés de l'Ukraine. Emmanuel Macron accuse Vladimir Poutine d'être « du côté de la guerre, pas du côté de la paix ».",
+          english: "France, precisely, which is among Ukraine's allies. Emmanuel Macron accuses Vladimir Putin of being \"on the side of war, not on the side of peace\"."
+        },
+        {
+          french: "Le président français est à Nancy, dans l'est de la France. Il a signé avec le Premier ministre de la Pologne un traité d'amitié, qui prévoit, notamment, une obligation de défense mutuelle en cas d'agression ; un nouveau rapprochement entre Européens face à la menace de la Russie.",
+          english: "The French president is in Nancy, in eastern France. He signed with the Prime Minister of Poland a treaty of friendship, which provides, in particular, an obligation of mutual defense in case of aggression; a new rapprochement between Europeans in the face of the threat from Russia."
+        },
+        {
+          french: "Lui promet de donner un nouvel élan, une nouvelle force à l'Europe. Le chancelier allemand Friedrich Merz est à Bruxelles. Il a échangé avec des responsables de l'Union européenne. Bonjour, Pierre Benazet.",
+          english: "He promises to give a new impetus, a new strength to Europe. German Chancellor Friedrich Merz is in Brussels. He has exchanged with officials of the European Union. Hello, Pierre Benazet."
+        },
+        {
+          french: "Bonjour.",
+          english: "Hello."
+        },
+        {
+          french: "La présence de Friedrich Merz, dès les premiers jours de son mandat, est vue comme un signe d'engagement pour que l'Allemagne reprenne l'initiative en Europe.",
+          english: "The presence of Friedrich Merz, from the first days of his mandate, is seen as a sign of commitment for Germany to take the initiative in Europe."
+        },
+        {
+          french: "Oui. Le nouveau chancelier allemand, Friedrich Merz, est venu répéter qu'il voulait s'engager pour l'Europe. Il est venu aussi pour rassurer les Européens, puisqu'il a subi quelques critiques de ses partenaires.",
+          english: "Yes. The new German Chancellor, Friedrich Merz, came to repeat that he wanted to commit to Europe. He also came to reassure the Europeans, as he has faced some criticism from his partners."
+        },
+        {
+          french: "Par exemple, la France, qui n'aime pas qu'il veuille signer un accord de libre-échange avec le Mercosur, en Amérique du Sud.",
+          english: "For example, France, which does not like that he wants to sign a free trade agreement with Mercosur in South America."
+        },
+        {
+          french: "Par exemple, les pays voisins du sud de l'Europe qui voudraient qu'il s'engage pour un emprunt commun européen pour la défense militaire.",
+          english: "For example, the neighboring countries of southern Europe who would like him to commit to a common European loan for military defense."
+        },
+        {
+          french: "Et puis ceux qui critiquent aussi les contrôles qu'il a remis en place à la frontière, et puis les refoulements de migrants clandestins.",
+          english: "And then those who also criticize the controls he has reestablished at the border, and then the turning back of illegal migrants."
+        },
+        {
+          french: "Il promet que ce ne sont que des mesures temporaires et qu'il ne veut pas remettre en cause la réforme du pacte d'asile de l'Union européenne. Je vous propose d'écouter Friedrich Merz.",
+          english: "He promises that these are only temporary measures and that he does not want to question the reform of the European Union's asylum pact. I suggest we listen to Friedrich Merz."
+        },
+        {
+          french: "« Nous n'avons pas de frontières extérieures européennes, à part avec la Suisse. Et, par conséquent, il n'est généralement pas possible de demander l'asile à une frontière intérieure européenne allemande. Nous savons que cela n'est possible que pour une durée limitée et c'est pourquoi j'ai promis au Premier ministre polonais que nous ne laisserions pas la sécurité des frontières extérieures de l'Europe aux seuls pays qui ont des frontières extérieures européennes. »",
+          english: "\"We do not have European external borders, except with Switzerland. And, consequently, it is generally not possible to request asylum at a German European internal border. We know that this is only possible for a limited time and that is why I promised the Polish Prime Minister that we would not leave the security of Europe's external borders to the countries that have European external borders alone.\""
+        },
+        {
+          french: "Friedrich Merz veut prouver qu'il est engagé pour l'Europe. Il souligne qu'il a déjà mis beaucoup d'argent pour la défense militaire.",
+          english: "Friedrich Merz wants to prove that he is committed to Europe. He emphasizes that he has already put a lot of money into military defense."
+        },
+        {
+          french: "Il souligne aussi que, dans la guerre commerciale avec les États-Unis, il a dit à Donald Trump qu'il n'y aurait pas d'accords séparés entre les États-Unis et chaque pays de l'Union européenne, que tous allaient y aller ensemble pour faire un front commun, un front uni face aux États-Unis.",
+          english: "He also emphasizes that, in the trade war with the United States, he told Donald Trump that there would be no separate agreements between the United States and each country of the European Union, that all would go together to make a common front, a united front against the United States."
+        },
+        {
+          french: "Merci, Pierre Benazet, en direct de Bruxelles dans votre Journal en français facile sur RFI.",
+          english: "Thank you, Pierre Benazet, live from Brussels in your Easy French News on RFI."
+        },
+        {
+          french: "Le Journal en français facile.",
+          english: "The News in easy French."
+        },
+        {
+          french: "Au lendemain de son élection, Léon XIV a célébré sa première messe en tant que pape. Elle s'est tenue à la chapelle Sixtine, au Vatican, devant les cardinaux.",
+          english: "The day after his election, Leo XIV celebrated his first mass as pope. It was held in the Sistine Chapel, at the Vatican, before the cardinals."
+        },
+        {
+          french: "Il a déploré le recul de la foi au profit, je cite, de « la technologie, l'argent, le pouvoir ou le plaisir ».",
+          english: "He deplored the decline of faith in favor of, I quote, \"technology, money, power or pleasure\"."
+        },
+        {
+          french: "La messe d'inauguration du pontificat de Léon XIV aura lieu le 18 mai, annonce le Vatican.",
+          english: "The inauguration mass of Leo XIV's pontificate will take place on May 18, announces the Vatican."
+        },
+        {
+          french: "L'élection du pape américain a suscité beaucoup de joie et d'émotion chez les catholiques nord-américains. Mais, chez les ultraconservateurs – ceux qui sont très attachés aux valeurs traditionnelles –, c'est la déception, Achim Lippold. On aurait préféré un pape moins progressiste.",
+          english: "The election of the American pope has aroused a lot of joy and emotion among North American Catholics. But among the ultraconservatives - those who are very attached to traditional values - it is disappointment, Achim Lippold. They would have preferred a less progressive pope."
+        },
+        {
+          french: "C'est un pape « marxiste ». Voilà comment l'influenceuse pro-Trump Laura Loomer a réagi à l'élection de Léon XIV.",
+          english: "He is a \"Marxist\" pope. That's how pro-Trump influencer Laura Loomer reacted to the election of Leo XIV."
+        },
+        {
+          french: "D'autres figures du mouvement trumpiste MAGA ont aussi critiqué le nouveau pape, qu'ils jugent bien trop progressiste.",
+          english: "Other figures from the Trumpist MAGA movement have also criticized the new pope, whom they consider far too progressive."
+        },
+        {
+          french: "En réalité, au sein du catholicisme américain, les ultraconservateurs ont clairement le vent en poupe. C'est ce que révèle une enquête récente.",
+          english: "In reality, within American Catholicism, the ultraconservatives are clearly on the rise. This is what a recent survey reveals."
+        },
+        {
+          french: "De plus en plus de jeunes prêtres adoptent une vision très orthodoxe, voire carrément médiévale de l'Église, écrit le magazine Slate.",
+          english: "More and more young priests are adopting a very orthodox, even downright medieval vision of the Church, writes Slate magazine."
+        },
+        {
+          french: "Une tendance qui n'est pas marginale. Elle est partagée par une grande partie de la hiérarchie ecclésiastique, dominée, aujourd'hui, par des cardinaux très conservateurs, que ce soit sur le plan politique, moral ou théologique.",
+          english: "A trend that is not marginal. It is shared by a large part of the ecclesiastical hierarchy, dominated, today, by very conservative cardinals, whether on the political, moral or theological level."
+        },
+        {
+          french: "À ce titre-là, le nouveau pape ne reflète pas vraiment l'Église américaine et, quelles que soient ses prises de position, il ne pourra pas inverser la tendance dans son pays.",
+          english: "In this respect, the new pope does not really reflect the American Church and, whatever his positions, he will not be able to reverse the trend in his country."
+        },
+        {
+          french: "La plupart des fidèles, dont plus d'un tiers sont d'origine latino, rejettent les valeurs libérales et ne veulent pas d'une Église inclusive.",
+          english: "Most of the faithful, of whom more than a third are of Latino origin, reject liberal values and do not want an inclusive Church."
+        },
+        {
+          french: "L'an dernier, 58 % des électeurs catholiques ont voté pour Donald Trump. C'est 8 points de plus qu'en 2020.",
+          english: "Last year, 58% of Catholic voters voted for Donald Trump. That's 8 points more than in 2020."
+        },
+        {
+          french: "Achim Lippold.",
+          english: "Achim Lippold."
+        },
+        {
+          french: "Donald Trump lâche du lest. Il fait des concessions dans la guerre commerciale contre la Chine.",
+          english: "Donald Trump is giving ground. He is making concessions in the trade war against China."
+        },
+        {
+          french: "Le président américain se dit favorable à un abaissement des droits de douane à 80 %, contre 145 actuellement.",
+          english: "The American president says he is in favor of lowering tariffs to 80%, compared to 145 currently."
+        },
+        {
+          french: "Annonce faite à la veille de négociations, en Suisse, entre le secrétaire au Trésor et le représentant au commerce américain et le vice-Premier ministre chinois.",
+          english: "Announcement made on the eve of negotiations, in Switzerland, between the Treasury Secretary and the U.S. Trade Representative and the Chinese Vice Premier."
+        },
+        {
+          french: "À l'écoute de RFI. Il est 19 h 08 dans la bande de Gaza, où l'UNRWA assure être irremplaçable pour distribuer l'aide humanitaire.",
+          english: "Listening to RFI. It is 7:08 PM in the Gaza Strip, where UNRWA assures that it is irreplaceable for distributing humanitarian aid."
+        },
+        {
+          french: "C'est cette agence de l'ONU pour les réfugiés palestiniens qui le dit elle-même, alors que le blocus se poursuit depuis, maintenant, plus de deux mois : nourriture, eau, carburant, médicaments, plus rien ne rentre et les stocks s'épuisent à Gaza, laissant plus de 2 millions de personnes face au risque de mourir de faim.",
+          english: "It is this UN agency for Palestinian refugees that says so itself, as the blockade continues now for more than two months: food, water, fuel, medicine, nothing is coming in and stocks are running out in Gaza, leaving more than 2 million people facing the risk of starvation."
+        },
+        {
+          french: "La porte-parole de l'UNRWA, Tamara Alrifai.",
+          english: "The spokesperson for UNRWA, Tamara Alrifai."
+        },
+        {
+          french: "« Ça fait maintenant plus de neuf semaines qu'il y a un blocus total, complet sur la bande de Gaza. Pas d'eau, pas de nourriture, pas de médicaments, pas de tentes, pas de couverture. Rien n'entre à Gaza depuis la reprise des hostilités, donc depuis l'effondrement du cessez-le-feu. La situation humanitaire à Gaza est catastrophique aujourd'hui. Elle est bien pire que ce qu'elle ne l'était il y a un an. Et il faut rappeler que ce siège, qui dure maintenant depuis plus de neuf semaines, est le plus long depuis le début de la guerre à Gaza, il y a 19 mois. »",
+          english: "\"It has now been more than nine weeks that there has been a total, complete blockade on the Gaza Strip. No water, no food, no medicine, no tents, no blankets. Nothing has entered Gaza since the resumption of hostilities, so since the collapse of the ceasefire. The humanitarian situation in Gaza is catastrophic today. It is much worse than it was a year ago. And it must be remembered that this siege, which has now lasted for more than nine weeks, is the longest since the beginning of the war in Gaza, 19 months ago.\""
+        },
+        {
+          french: "La porte-parole de l'UNRWA, Tamara Alrifai, appelée par Alice Froussard.",
+          english: "The spokesperson for UNRWA, Tamara Alrifai, called by Alice Froussard."
+        },
+        {
+          french: "Il est presque 18 h 10 à Paris.",
+          english: "It is almost 6:10 PM in Paris."
+        },
+        {
+          french: "Ainsi se referme cette édition. Elle est à réécouter et à lire sur francaisfacile.rfi.fr.",
+          english: "Thus closes this edition. It can be listened to again and read on francaisfacile.rfi.fr."
+        }
+      ];
+      
+      setScript(translatedScript);
+      setLoading(false);
+    };
+    
+    loadScript();
+  }, []);
+
+  // Handle play/pause button
+  const handlePlayPause = () => {
+    if (isPlaying) {
+      window.speechSynthesis.cancel();
+      setIsPlaying(false);
+    } else {
+      setIsPlaying(true);
+    }
+  };
+
+  // Handle reset button
+  const handleReset = () => {
+    window.speechSynthesis.cancel();
+    setIsPlaying(false);
+    setCurrentIndex(0);
+  };
+
+  // Handle jump to specific sentence
+  const handleJumpTo = (index) => {
+    window.speechSynthesis.cancel();
+    setIsPlaying(false);
+    setCurrentIndex(index);
+  };
+
+  return (
+    <div className="flex flex-col h-full bg-gray-50 p-4">
+      <div className="bg-white rounded-lg shadow-md p-6 mb-4">
+        <h1 className="text-2xl font-bold mb-4 text-blue-800">French-English News Reader</h1>
+        
+        {loading ? (
+          <div className="text-center py-8">Loading news script...</div>
+        ) : (
+          <>
+            {/* Controls */}
+            <div className="flex justify-between mb-6">
+              <div>
+                <button 
+                  onClick={handlePlayPause}
+                  className={`px-4 py-2 rounded-md font-medium ${isPlaying ? 'bg-red-500 text-white' : 'bg-green-500 text-white'}`}
+                >
+                  {isPlaying ? 'Pause' : 'Play'}
+                </button>
+                <button 
+                  onClick={handleReset}
+                  className="ml-2 px-4 py-2 bg-gray-200 rounded-md font-medium"
+                >
+                  Reset
+                </button>
+              </div>
+              <div className="text-sm text-gray-600">
+                {currentIndex}/{script.length} sentences
+              </div>
+            </div>
+            
+            {/* Current sentence */}
+            <div className="mb-6 bg-blue-50 p-4 rounded-lg border border-blue-100">
+              <div className="mb-2">
+                <span className="text-xs font-semibold text-blue-600 uppercase">Currently Playing:</span>
+              </div>
+              {currentIndex < script.length ? (
+                <>
+                  <p className="text-lg font-medium text-blue-900 mb-2">{script[currentIndex].french}</p>
+                  <p className="text-md text-blue-700">{script[currentIndex].english}</p>
+                </>
+              ) : (
+                <p className="text-lg italic text-blue-900">End of script reached</p>
+              )}
+            </div>
+            
+            {/* Progress bar */}
+            <div className="w-full bg-gray-200 rounded-full h-2.5 mb-6">
+              <div 
+                className="bg-blue-600 h-2.5 rounded-full" 
+                style={{ width: `${(currentIndex / script.length) * 100}%` }}
+              ></div>
+            </div>
+            
+            {/* Sentence list */}
+            <div className="border rounded-lg overflow-hidden">
+              <div className="max-h-64 overflow-y-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50 sticky top-0">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">No.</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sentence</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {script.map((item, index) => (
+                      <tr 
+                        key={index} 
+                        className={`hover:bg-gray-50 cursor-pointer ${currentIndex === index ? 'bg-blue-50' : ''}`}
+                        onClick={() => handleJumpTo(index)}
+                      >
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{index + 1}</td>
+                        <td className="px-6 py-4">
+                          <p className="text-sm text-gray-900 mb-1">{item.french}</p>
+                          <p className="text-sm text-gray-500 italic">{item.english}</p>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+      
+      <div className="bg-white rounded-lg shadow-md p-4 text-sm text-gray-600">
+        <p>This application reads a French news script with English translations. Click Play to start the audio reading. Each sentence will be read first in French, then in English.</p>
+        <p className="mt-2">You can also click on any sentence in the list to jump to that specific part.</p>
+      </div>
+    </div>
+  );
+};
+
+export default FrenchEnglishReader;
