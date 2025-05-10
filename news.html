@@ -147,9 +147,15 @@
       // Speak English
       await speak(state.script[state.currentIndex].english, 'en-GB');
       
-      // Advance to next sentence pair after a short pause
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Slight pause before French repeat
+      await new Promise(resolve => setTimeout(resolve, 500));
       
+      // Speak French second time
+      await speak(state.script[state.currentIndex].french, 'fr-FR');
+      
+      // Pause before moving to next sentence
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
       state.currentIndex++;
       updateUI();
       
