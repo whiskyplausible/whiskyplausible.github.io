@@ -54,14 +54,14 @@ html, body {
 .logo-wrapper {
   position: absolute;
   top: calc(50% - 6rem); /* 6rem above midline */
-  left: 5%;
+  left: 50px;
   pointer-events: auto;
 }
 
 .button-wrapper {
   position: absolute;
   top: calc(50% + 6rem); /* 4rem below midline */
-  left: 5%;
+  left: 54px;
   pointer-events: auto;
 }
 
