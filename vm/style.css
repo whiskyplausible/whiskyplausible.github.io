@@ -109,6 +109,28 @@ html, body {
   background: rgba(255, 255, 255, 0.2);
 }
 
+
+
+footer {
+  position: absolute;
+  bottom: 2.2rem;
+  width: 100%;
+  text-align: center;
+  font-size: 0.75rem;
+  color: #36445d;
+  pointer-events: auto;
+}
+
+footer a {
+  color: #36445d; /* Same color as footer text */
+  text-decoration: none; /* Remove underline */
+  font-weight: bold; /* Make it bold */
+}
+
+footer a:hover {
+  text-decoration: underline; /* Optional: add underline on hover for better UX */
+}
+
 @media screen and (max-width: 768px) and (orientation: portrait) {
   .logo-wrapper {
     position: absolute;
@@ -139,17 +161,17 @@ html, body {
 }
 
 /* Mobile landscape styles - NEW */
-@media only screen and (max-height: 575.98px) and (orientation: landscape) {
+@media only screen and (max-height: 575.98px) and (orientation: landscape) {  
   .logo-wrapper {
   position: absolute;
-  top: calc(50% - 5rem); /* 6rem above midline */
+  top: calc(50% - 4rem); /* 6rem above midline */
   left: 60px;
   pointer-events: auto;
   }
  
   .button-wrapper {
   position: absolute;
-  top: calc(50% + 5rem); /* 4rem below midline */
+  top: calc(50% + 4rem); /* 4rem below midline */
   left: 60px;
   pointer-events: auto;
   }
@@ -166,28 +188,7 @@ html, body {
   
   /* Adjust footer for mobile landscape due to limited vertical space */
   footer {
-    font-size: 0.75rem;
-    bottom: 1rem;
+    font-size:0.3rem;
+    bottom: 1.5rem;
   }
-}
-
-
-footer {
-  position: absolute;
-  bottom: 2.2rem;
-  width: 100%;
-  text-align: center;
-  font-size: 0.75rem;
-  color: #36445d;
-  pointer-events: auto;
-}
-
-footer a {
-  color: #36445d; /* Same color as footer text */
-  text-decoration: none; /* Remove underline */
-  font-weight: bold; /* Make it bold */
-}
-
-footer a:hover {
-  text-decoration: underline; /* Optional: add underline on hover for better UX */
 }
