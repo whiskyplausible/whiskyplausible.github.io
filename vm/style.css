@@ -22,6 +22,24 @@ html, body {
 }
 
 #bgVideo {
+  display: block;
+}
+#bgVideoMobile {
+  display: none;
+}
+
+/* Mobile portrait: hide desktop video, show mobile video */
+@media screen and (max-width: 768px) and (orientation: portrait) {
+  #bgVideo {
+    display: none;
+  }
+  #bgVideoMobile {
+    display: block;
+  }
+}
+
+/* Base styling for both videos */
+#bgVideo, #bgVideoMobile {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -54,7 +72,7 @@ html, body {
 .logo-wrapper {
   position: absolute;
   top: calc(50% - 6rem); /* 6rem above midline */
-  left: 50px;
+  left: 60px;
   pointer-events: auto;
 }
 
@@ -87,12 +105,51 @@ html, body {
   background: rgba(255, 255, 255, 0.2);
 }
 
+@media screen and (max-width: 768px) and (orientation: portrait) {
+  .logo-wrapper {
+    position: absolute;
+    top: 9rem; /* Distance from top - adjust as needed */
+    left: 50%;
+    transform: translateX(-50%); /* Center horizontally */
+  }
+  
+  .button-wrapper {
+    position: absolute;
+    bottom: 9rem; /* Distance from bottom - adjust as needed */
+    left: 50%;
+    transform: translateX(-50%); /* Center horizontally */
+    top: auto; /* Override the desktop top positioning */
+  }
+  
+  .logo {
+    display: block;
+    margin: 0 auto 1.5rem auto;
+    max-width: 140px; /* Smaller than desktop's 220px */
+  }
+  
+  /* Make button smaller */
+.button {
+    max-width: 140px; /* Adjust this value as needed */
+    height: auto; /* Maintain aspect ratio */
+  }
+}
+
 footer {
   position: absolute;
   bottom: 1rem;
   width: 100%;
   text-align: center;
-  font-size: 0.9rem;
-  color: #ccc;
+  font-size: 0.75rem;
+  color: #36445d;
   pointer-events: auto;
+}
+
+footer a {
+  color: #36445d; /* Same color as footer text */
+  text-decoration: none; /* Remove underline */
+  font-weight: bold; /* Make it bold */
+}
+
+footer a:hover {
+  text-decoration: underline; /* Optional: add underline on hover for better UX */
 }
