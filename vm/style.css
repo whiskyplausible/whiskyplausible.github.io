@@ -138,9 +138,43 @@ html, body {
   }
 }
 
+/* Mobile landscape styles - NEW */
+@media only screen and (max-height: 575.98px) and (orientation: landscape) {
+  .logo-wrapper {
+  position: absolute;
+  top: calc(50% - 5rem); /* 6rem above midline */
+  left: 60px;
+  pointer-events: auto;
+  }
+ 
+  .button-wrapper {
+  position: absolute;
+  top: calc(50% + 5rem); /* 4rem below midline */
+  left: 60px;
+  pointer-events: auto;
+  }
+ 
+  .logo {
+    max-width: 120px; /* Even smaller for landscape */
+    margin-bottom: 0; /* Remove bottom margin */
+  }
+ 
+  .button {
+    max-width: 120px; /* Match logo size */
+    height: auto;
+  }
+  
+  /* Adjust footer for mobile landscape due to limited vertical space */
+  footer {
+    font-size: 20rem;
+    bottom: 0.5rem;
+  }
+}
+
+
 footer {
   position: absolute;
-  bottom: 1rem;
+  bottom: 2.2rem;
   width: 100%;
   text-align: center;
   font-size: 0.75rem;
