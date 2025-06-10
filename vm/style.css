@@ -21,14 +21,8 @@ html, body {
   overflow: hidden;
 }
 
-#bgVideo {
-  display: block;
-}
-#bgVideoMobile {
-  display: none;
-}
 
-/* Mobile portrait: hide desktop video, show mobile video */
+/* Mobile portrait */
 @media screen and (max-width: 768px) and (orientation: portrait) {
   #bgVideo {
     display: none;
@@ -37,6 +31,16 @@ html, body {
     display: block;
   }
 }
+
+@media screen and (min-width: 769px), screen and (max-width: 768px) and (orientation: landscape) {
+  #bgVideo {
+    display: block;
+  }
+  #bgVideoMobile {
+    display: none;
+  }
+}
+
 
 /* Base styling for both videos */
 #bgVideo, #bgVideoMobile {

@@ -4,17 +4,18 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Version Music</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css?v=9" />
 </head>
 <body>
 
 <div class="video-background">
-  <video id="bgVideo" muted loop playsinline webkit-playsinline preload="auto">
+  <video id="bgVideoMobile" muted autoplay loop playsinline webkit-playsinline preload="auto">
+    <source src="ver_landing_port_reencode_2.mp4" type="video/mp4">
+  </video>
+  <video id="bgVideo" muted autoplay loop playsinline webkit-playsinline preload="auto">
     <source src="ver_landing_land_reencode.mp4" type="video/mp4">
   </video>
-  <video id="bgVideoMobile" muted loop playsinline webkit-playsinline preload="auto">
-    <source src="ver_landing_port_reencode.mp4" type="video/mp4">
-  </video>
+
 </div>
 
   <div class="overlay">
@@ -32,75 +33,6 @@
     </footer>
   </div>
 
-  <script>
-  let currentVideo = null;
-
-  function initializeVideo() {
-    const desktopVideo = document.getElementById('bgVideo');
-    const mobileVideo = document.getElementById('bgVideoMobile');
-    
-    // Determine which video should be active based on current viewport
-    const isPortrait = window.matchMedia('(max-width: 768px) and (orientation: portrait)').matches;
-    const targetVideo = isPortrait ? mobileVideo : desktopVideo;
-    
-    console.log('Initializing video for:', isPortrait ? 'portrait' : 'landscape');
-    
-    // Stop any currently playing video
-    if (currentVideo && currentVideo !== targetVideo) {
-      currentVideo.pause();
-      currentVideo.currentTime = 0;
-    }
-    
-    // Start the target video
-    if (targetVideo.readyState >= 2) { // HAVE_CURRENT_DATA
-      targetVideo.currentTime = 0;
-      targetVideo.play().then(() => {
-        console.log('Video started successfully');
-        currentVideo = targetVideo;
-      }).catch(error => {
-        console.log('Video play failed:', error);
-        // Try again after a short delay
-        setTimeout(() => {
-          targetVideo.play().catch(e => console.log('Retry failed:', e));
-        }, 500);
-      });
-    } else {
-      // Wait for video to be ready
-      targetVideo.addEventListener('loadeddata', function() {
-        targetVideo.currentTime = 0;
-        targetVideo.play().then(() => {
-          console.log('Video started after loading');
-          currentVideo = targetVideo;
-        }).catch(error => {
-          console.log('Video play failed after loading:', error);
-        });
-      }, { once: true });
-    }
-  }
-
-  // Initialize on page load
-  document.addEventListener('DOMContentLoaded', initializeVideo);
-  
-  // Handle orientation changes
-  window.addEventListener('orientationchange', function() {
-    console.log('Orientation changed');
-    setTimeout(initializeVideo, 500);
-  });
-  
-  // Handle resize (for desktop testing)
-  let resizeTimeout;
-  window.addEventListener('resize', function() {
-    clearTimeout(resizeTimeout);
-    resizeTimeout = setTimeout(initializeVideo, 300);
-  });
-  
-  // Debug: Log media query changes
-  const mediaQuery = window.matchMedia('(max-width: 768px) and (orientation: portrait)');
-  mediaQuery.addListener(function(mq) {
-    console.log('Media query changed:', mq.matches ? 'portrait' : 'landscape');
-    setTimeout(initializeVideo, 100);
-  });
-</script>
 </body>
 </html>
 
