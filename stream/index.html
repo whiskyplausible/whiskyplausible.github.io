@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple P2P Audio Streaming</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .sender, .receiver {
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            padding: 20px;
+        }
+        .sender {
+            border-color: #28a745;
+            background-color: #f8f9fa;
+        }
+        .receiver {
+            border-color: #007bff;
+            background-color: #f8f9fa;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+        }
+        .start-btn { background-color: #28a745; color: white; }
+        .stop-btn { background-color: #dc3545; color: white; }
+        .connect-btn { background-color: #007bff; color: white; }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .info { background-color: #d1ecf1; color: #0c5460; }
+        .warning { background-color: #fff3cd; color: #856404; }
+        textarea {
+            width: 100%;
+            height: 80px;
+            margin: 10px 0;
+            resize: vertical;
+        }
+        audio {
+            width: 100%;
+            margin: 10px 0;
+        }
+        .instructions {
+            background-color: #e7f3ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Simple P2P Audio Streaming</h1>
+    
+    <div class="instructions">
+        <strong>Instructions:</strong>
+        <ol>
+            <li><strong>Sender:</strong> Click "Start Microphone" → "Create Offer" → Copy the offer</li>
+            <li><strong>Receiver:</strong> Paste the offer → "Set Offer & Create Answer" → Copy the answer</li>
+            <li><strong>Sender:</strong> Paste the answer → "Set Answer"</li>
+            <li>Audio should now be streaming!</li>
+        </ol>
+    </div>
+
+    <div class="container">
+        <!-- SENDER SIDE -->
+        <div class="sender">
+            <h2>🎤 Sender (Streamer)</h2>
+            
+            <button id="startMicBtn" class="start-btn">Start Microphone</button>
+            <button id="stopMicBtn" class="stop-btn" disabled>Stop Microphone</button>
+            
+            <div id="senderStatus" class="status info">Ready to start</div>
+            
+            <button id="createOfferBtn" class="connect-btn" disabled>Create Offer</button>
+            
+            <div>
+                <label><strong>Offer (send to receiver):</strong></label>
+                <textarea id="offerText" readonly placeholder="Offer will appear here..."></textarea>
+            </div>
+            
+            <div>
+                <label><strong>Answer (paste from receiver):</strong></label>
+                <textarea id="answerInput" placeholder="Paste answer from receiver here..."></textarea>
+                <button id="setAnswerBtn" class="connect-btn">Set Answer</button>
+            </div>
+        </div>
+
+        <!-- RECEIVER SIDE -->
+        <div class="receiver">
+            <h2>🔊 Receiver (Listener)</h2>
+            
+            <div id="receiverStatus" class="status info">Waiting for connection</div>
+            
+            <div>
+                <label><strong>Offer (paste from sender):</strong></label>
+                <textarea id="offerInput" placeholder="Paste offer from sender here..."></textarea>
+                <button id="setOfferBtn" class="connect-btn">Set Offer & Create Answer</button>
+            </div>
+            
+            <div>
+                <label><strong>Answer (send to sender):</strong></label>
+                <textarea id="answerText" readonly placeholder="Answer will appear here..."></textarea>
+            </div>
+            
+            <audio id="remoteAudio" controls autoplay></audio>
+        </div>
+    </div>
+
+    <script>
+        // WebRTC Configuration
+        const config = {
+            iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' }
+            ]
+        };
+
+        // Sender variables
+        let senderPC = null;
+        let localStream = null;
+
+        // Receiver variables
+        let receiverPC = null;
+
+        // DOM elements
+        const startMicBtn = document.getElementById('startMicBtn');
+        const stopMicBtn = document.getElementById('stopMicBtn');
+        const createOfferBtn = document.getElementById('createOfferBtn');
+        const setAnswerBtn = document.getElementById('setAnswerBtn');
+        const setOfferBtn = document.getElementById('setOfferBtn');
+        
+        const senderStatus = document.getElementById('senderStatus');
+        const receiverStatus = document.getElementById('receiverStatus');
+        
+        const offerText = document.getElementById('offerText');
+        const answerInput = document.getElementById('answerInput');
+        const offerInput = document.getElementById('offerInput');
+        const answerText = document.getElementById('answerText');
+        
+        const remoteAudio = document.getElementById('remoteAudio');
+
+        // SENDER FUNCTIONS
+        startMicBtn.addEventListener('click', startMicrophone);
+        stopMicBtn.addEventListener('click', stopMicrophone);
+        createOfferBtn.addEventListener('click', createOffer);
+        setAnswerBtn.addEventListener('click', setAnswer);
+
+        // RECEIVER FUNCTIONS
+        setOfferBtn.addEventListener('click', setOfferAndCreateAnswer);
+
+        async function startMicrophone() {
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        autoGainControl: true
+                    }
+                });
+
+                startMicBtn.disabled = true;
+                stopMicBtn.disabled = false;
+                createOfferBtn.disabled = false;
+                
+                updateSenderStatus('Microphone active', 'success');
+            } catch (error) {
+                updateSenderStatus(`Error: ${error.message}`, 'error');
+            }
+        }
+
+        function stopMicrophone() {
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+                localStream = null;
+            }
+            
+            if (senderPC) {
+                senderPC.close();
+                senderPC = null;
+            }
+
+            startMicBtn.disabled = false;
+            stopMicBtn.disabled = true;
+            createOfferBtn.disabled = true;
+            
+            updateSenderStatus('Microphone stopped', 'info');
+            offerText.value = '';
+        }
+
+        async function createOffer() {
+            try {
+                senderPC = new RTCPeerConnection(config);
+                
+                // Add local stream to peer connection
+                localStream.getTracks().forEach(track => {
+                    senderPC.addTrack(track, localStream);
+                });
+
+                // Handle ICE candidates
+                senderPC.onicecandidate = (event) => {
+                    if (event.candidate === null) {
+                        // All ICE candidates have been gathered
+                        offerText.value = JSON.stringify(senderPC.localDescription);
+                        updateSenderStatus('Offer created! Copy and send to receiver', 'warning');
+                    }
+                };
+
+                // Create and set offer
+                const offer = await senderPC.createOffer();
+                await senderPC.setLocalDescription(offer);
+                
+                updateSenderStatus('Creating offer...', 'info');
+            } catch (error) {
+                updateSenderStatus(`Error creating offer: ${error.message}`, 'error');
+            }
+        }
+
+        async function setAnswer() {
+            try {
+                if (!answerInput.value.trim()) {
+                    updateSenderStatus('Please paste the answer first', 'error');
+                    return;
+                }
+
+                const answer = JSON.parse(answerInput.value);
+                await senderPC.setRemoteDescription(answer);
+                
+                updateSenderStatus('Connected! Audio is streaming', 'success');
+            } catch (error) {
+                updateSenderStatus(`Error setting answer: ${error.message}`, 'error');
+            }
+        }
+
+        async function setOfferAndCreateAnswer() {
+            try {
+                if (!offerInput.value.trim()) {
+                    updateReceiverStatus('Please paste the offer first', 'error');
+                    return;
+                }
+
+                receiverPC = new RTCPeerConnection(config);
+
+                // Handle incoming stream
+                receiverPC.ontrack = (event) => {
+                    remoteAudio.srcObject = event.streams[0];
+                    updateReceiverStatus('Receiving audio stream!', 'success');
+                };
+
+                // Handle ICE candidates
+                receiverPC.onicecandidate = (event) => {
+                    if (event.candidate === null) {
+                        // All ICE candidates have been gathered
+                        answerText.value = JSON.stringify(receiverPC.localDescription);
+                        updateReceiverStatus('Answer created! Copy and send to sender', 'warning');
+                    }
+                };
+
+                // Set offer and create answer
+                const offer = JSON.parse(offerInput.value);
+                await receiverPC.setRemoteDescription(offer);
+                
+                const answer = await receiverPC.createAnswer();
+                await receiverPC.setLocalDescription(answer);
+                
+                updateReceiverStatus('Creating answer...', 'info');
+            } catch (error) {
+                updateReceiverStatus(`Error: ${error.message}`, 'error');
+            }
+        }
+
+        function updateSenderStatus(message, type) {
+            senderStatus.textContent = message;
+            senderStatus.className = `status ${type}`;
+        }
+
+        function updateReceiverStatus(message, type) {
+            receiverStatus.textContent = message;
+            receiverStatus.className = `status ${type}`;
+        }
+
+        // Copy to clipboard functionality
+        offerText.addEventListener('click', () => {
+            if (offerText.value) {
+                offerText.select();
+                document.execCommand('copy');
+                updateSenderStatus('Offer copied to clipboard!', 'info');
+            }
+        });
+
+        answerText.addEventListener('click', () => {
+            if (answerText.value) {
+                answerText.select();
+                document.execCommand('copy');
+                updateReceiverStatus('Answer copied to clipboard!', 'info');
+            }
+        });
+    </script>
+</body>
+</html>
