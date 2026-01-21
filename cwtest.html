@@ -1,0 +1,26 @@
+ <!DOCTYPE html>
+<html>
+    <script>
+  (function(d,t) {
+    var BASE_URL="https://nyan.myloadbalancertest.website";
+    var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
+    g.src=BASE_URL+"/packs/js/sdk.js";
+    g.async = true;
+    s.parentNode.insertBefore(g,s);
+    g.onload=function(){
+      window.chatwootSDK.run({
+        websiteToken: 'S2ND9ntvut4v2szQ5scA8G84',
+        baseUrl: BASE_URL
+      })
+    }
+  })(document,"script");
+</script>
+
+<body>
+
+<h1>My First Heading</h1>
+<p>My first paragraph.</p>
+
+</body>
+</html> 
+
